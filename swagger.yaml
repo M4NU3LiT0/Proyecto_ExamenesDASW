@@ -1,0 +1,1181 @@
+openapi: 3.0.0
+info:
+  title: API Generador de Exámenes - DASW
+  description: |
+    API REST para un sistema de generación y evaluación de exámenes.
+    
+    **Roles:**
+    - **Teacher (Profesor):** Puede crear/modificar/eliminar exámenes, preguntas y ver todos los resultados
+    - **Student (Estudiante):** Puede ver exámenes, responder preguntas y ver sus propios resultados
+    
+    **Autenticación:**
+    Todos los endpoints protegidos requieren un token JWT en el header Authorization:
+    ```
+    Authorization: Bearer <token>
+    ```
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor de desarrollo local
+
+tags:
+  - name: Auth
+    description: Autenticación y registro de usuarios
+  - name: Exams
+    description: Gestión de exámenes
+  - name: Questions
+    description: Gestión de preguntas
+  - name: Results
+    description: Gestión de resultados
+
+paths:
+  /api/Auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Registrar nuevo usuario
+      description: Crear una nueva cuenta de usuario (student o teacher)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: Juan Pérez
+                email:
+                  type: string
+                  format: email
+                  example: juan@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: password123
+                role:
+                  type: string
+                  enum: [student, teacher]
+                  default: student
+                  example: student
+      responses:
+        '201':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Usuario registrado exitosamente.
+        '400':
+          description: Error de validación o email duplicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Iniciar sesión
+      description: Autenticar usuario y obtener token JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: juan@example.com
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 507f1f77bcf86cd799439011
+                      name:
+                        type: string
+                        example: Juan Pérez
+                      role:
+                        type: string
+                        example: student
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Exams:
+    get:
+      tags:
+        - Exams
+      summary: Obtener todos los exámenes
+      description: Listar exámenes con paginación y filtros opcionales
+      parameters:
+        - name: subject
+          in: query
+          description: Filtrar por materia
+          schema:
+            type: string
+            example: Matemáticas
+        - name: page
+          in: query
+          description: Número de página
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Resultados por página
+          schema:
+            type: integer
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Lista de exámenes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 25
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Exam'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Exams
+      summary: Crear nuevo examen
+      description: Crear un examen (requiere rol de teacher)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - subject
+                - date
+              properties:
+                title:
+                  type: string
+                  example: Examen de Matemáticas - Álgebra
+                subject:
+                  type: string
+                  example: Matemáticas
+                date:
+                  type: string
+                  format: date-time
+                  example: 2024-12-15T10:00:00Z
+                duration:
+                  type: integer
+                  description: Duración en minutos
+                  default: 60
+                  example: 90
+      responses:
+        '201':
+          description: Examen creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exam'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol teacher)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Exams/{id}:
+    get:
+      tags:
+        - Exams
+      summary: Obtener examen por ID
+      description: Obtener detalles de un examen específico
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del examen
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Examen encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exam'
+        '404':
+          description: Examen no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Exams
+      summary: Actualizar examen
+      description: Modificar un examen existente (requiere rol de teacher)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del examen
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Examen de Matemáticas - Álgebra Avanzada
+                subject:
+                  type: string
+                  example: Matemáticas
+                date:
+                  type: string
+                  format: date-time
+                  example: 2024-12-15T10:00:00Z
+                duration:
+                  type: integer
+                  example: 120
+      responses:
+        '200':
+          description: Examen actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exam'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol teacher)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Examen no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Exams
+      summary: Eliminar examen
+      description: Borrar un examen (requiere rol de teacher)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del examen
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Examen eliminado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Examen eliminado
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol teacher)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Examen no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Questions:
+    get:
+      tags:
+        - Questions
+      summary: Obtener todas las preguntas
+      description: Listar preguntas con paginación y filtros opcionales
+      parameters:
+        - name: examId
+          in: query
+          description: Filtrar por ID del examen
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+        - name: difficulty
+          in: query
+          description: Filtrar por dificultad
+          schema:
+            type: string
+            enum: [easy, medium, hard]
+            example: medium
+        - name: page
+          in: query
+          description: Número de página
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Resultados por página
+          schema:
+            type: integer
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Lista de preguntas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 50
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Question'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Questions
+      summary: Crear nueva pregunta
+      description: Crear una pregunta para un examen (requiere rol de teacher)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionInput'
+      responses:
+        '201':
+          description: Pregunta creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol teacher)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Examen no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Questions/{id}:
+    get:
+      tags:
+        - Questions
+      summary: Obtener pregunta por ID
+      description: Obtener detalles de una pregunta específica
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la pregunta
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Pregunta encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '404':
+          description: Pregunta no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Questions
+      summary: Actualizar pregunta
+      description: Modificar una pregunta existente (requiere rol de teacher y ser creador del examen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la pregunta
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionInput'
+      responses:
+        '200':
+          description: Pregunta actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Pregunta no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Questions
+      summary: Eliminar pregunta
+      description: Borrar una pregunta (requiere rol de teacher y ser creador del examen)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la pregunta
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Pregunta eliminada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Pregunta eliminada
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Pregunta no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Results:
+    post:
+      tags:
+        - Results
+      summary: Enviar respuestas de examen
+      description: Estudiante envía sus respuestas y recibe calificación automática (requiere rol student)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - examId
+                - answers
+              properties:
+                examId:
+                  type: string
+                  example: 507f1f77bcf86cd799439011
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      questionId:
+                        type: string
+                        example: 507f1f77bcf86cd799439012
+                      selectedOptions:
+                        type: array
+                        items:
+                          type: integer
+                        example: [1]
+      responses:
+        '201':
+          description: Respuestas enviadas y calificadas exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '400':
+          description: Error de validación o examen ya enviado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol student)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Examen no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Results
+      summary: Obtener todos los resultados
+      description: Listar todos los resultados (requiere rol teacher)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: query
+          description: Filtrar por ID del examen
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+        - name: studentId
+          in: query
+          description: Filtrar por ID del estudiante
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439013
+        - name: page
+          in: query
+          description: Número de página
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Resultados por página
+          schema:
+            type: integer
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Lista de resultados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 100
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Result'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol teacher)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Results/my:
+    get:
+      tags:
+        - Results
+      summary: Obtener mis resultados
+      description: Estudiante obtiene sus propios resultados (requiere rol student)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: query
+          description: Filtrar por ID del examen
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+        - name: page
+          in: query
+          description: Número de página
+          schema:
+            type: integer
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Resultados por página
+          schema:
+            type: integer
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Lista de resultados propios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 5
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Result'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol student)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/Results/{id}:
+    get:
+      tags:
+        - Results
+      summary: Obtener resultado por ID
+      description: Obtener detalles de un resultado (students solo ven los suyos, teachers ven todos)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del resultado
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Resultado encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Resultado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Results
+      summary: Eliminar resultado
+      description: Borrar un resultado (requiere rol de teacher)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del resultado
+          schema:
+            type: string
+            example: 507f1f77bcf86cd799439011
+      responses:
+        '200':
+          description: Resultado eliminado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Resultado eliminado
+        '401':
+          description: Token no proporcionado o inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Permiso denegado (requiere rol teacher)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Resultado no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Error message
+        message:
+          type: string
+          example: Detailed error description
+
+    Exam:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        title:
+          type: string
+          example: Examen de Matemáticas - Álgebra
+        subject:
+          type: string
+          example: Matemáticas
+        date:
+          type: string
+          format: date-time
+          example: 2024-12-15T10:00:00Z
+        duration:
+          type: integer
+          example: 90
+        createdBy:
+          type: string
+          example: 507f1f77bcf86cd799439012
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-12-01T12:00:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-12-01T12:00:00Z
+
+    Question:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        examId:
+          type: string
+          example: 507f1f77bcf86cd799439012
+        questionText:
+          type: string
+          example: ¿Cuál es el resultado de 2 + 2?
+        questionType:
+          type: string
+          enum: [multiple-choice, true-false, multi-select]
+          example: multiple-choice
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+                example: "4"
+              isCorrect:
+                type: boolean
+                example: true
+        points:
+          type: integer
+          example: 1
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+          example: easy
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    QuestionInput:
+      type: object
+      required:
+        - examId
+        - questionText
+        - questionType
+        - options
+      properties:
+        examId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        questionText:
+          type: string
+          example: ¿Cuál es el resultado de 2 + 2?
+        questionType:
+          type: string
+          enum: [multiple-choice, true-false, multi-select]
+          example: multiple-choice
+        options:
+          type: array
+          items:
+            type: object
+            required:
+              - text
+              - isCorrect
+            properties:
+              text:
+                type: string
+                example: "4"
+              isCorrect:
+                type: boolean
+                example: true
+        points:
+          type: integer
+          default: 1
+          example: 1
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+          default: medium
+          example: easy
+
+    Result:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 507f1f77bcf86cd799439011
+        examId:
+          type: string
+          example: 507f1f77bcf86cd799439012
+        studentId:
+          type: string
+          example: 507f1f77bcf86cd799439013
+        answers:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId:
+                type: string
+                example: 507f1f77bcf86cd799439014
+              selectedOptions:
+                type: array
+                items:
+                  type: integer
+                example: [1]
+              isCorrect:
+                type: boolean
+                example: true
+              pointsEarned:
+                type: integer
+                example: 1
+        totalScore:
+          type: integer
+          example: 8
+        maxScore:
+          type: integer
+          example: 10
+        percentage:
+          type: number
+          example: 80
+        passed:
+          type: boolean
+          example: true
+        submittedAt:
+          type: string
+          format: date-time
+          example: 2024-12-15T11:30:00Z
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

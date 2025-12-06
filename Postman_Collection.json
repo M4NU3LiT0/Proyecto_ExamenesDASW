@@ -1,0 +1,865 @@
+{
+  "info": {
+    "name": "API Generador de Exámenes - DASW",
+    "_postman_id": "exam-generator-api",
+    "description": "Colección completa de endpoints para el sistema de generación y evaluación de exámenes",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "examId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "questionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resultId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Teacher",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Profesor Juan\",\n  \"email\": \"profesor@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"teacher\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "register"]
+            },
+            "description": "Registro de un nuevo usuario con rol de profesor"
+          },
+          "response": []
+        },
+        {
+          "name": "Register Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Estudiante María\",\n  \"email\": \"estudiante@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "register"]
+            },
+            "description": "Registro de un nuevo usuario con rol de estudiante"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Teacher",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"profesor@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "login"]
+            },
+            "description": "Iniciar sesión como profesor y guardar token"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"estudiante@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Auth", "login"]
+            },
+            "description": "Iniciar sesión como estudiante y guardar token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Exams",
+      "item": [
+        {
+          "name": "Get All Exams",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Exams?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Exams"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "subject",
+                  "value": "Matemáticas",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Obtener todos los exámenes con paginación y filtros opcionales"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Exam by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Exams/{{examId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Exams", "{{examId}}"]
+            },
+            "description": "Obtener un examen específico por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Exam (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"examId\", jsonData._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Examen de Matemáticas - Álgebra\",\n  \"subject\": \"Matemáticas\",\n  \"date\": \"2024-12-15T10:00:00Z\",\n  \"duration\": 90\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Exams",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Exams"]
+            },
+            "description": "Crear un nuevo examen (requiere rol de teacher)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Exam (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Examen de Matemáticas - Álgebra Avanzada\",\n  \"duration\": 120\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Exams/{{examId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Exams", "{{examId}}"]
+            },
+            "description": "Actualizar un examen existente (requiere rol de teacher)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Exam (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Exams/{{examId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Exams", "{{examId}}"]
+            },
+            "description": "Eliminar un examen (requiere rol de teacher)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "Get All Questions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Questions?examId={{examId}}&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Questions"],
+              "query": [
+                {
+                  "key": "examId",
+                  "value": "{{examId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "difficulty",
+                  "value": "medium",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Obtener todas las preguntas con filtros opcionales"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Question by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/Questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Questions", "{{questionId}}"]
+            },
+            "description": "Obtener una pregunta específica por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Question - Multiple Choice (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"questionId\", jsonData._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examId\": \"{{examId}}\",\n  \"questionText\": \"¿Cuál es el resultado de 2 + 2?\",\n  \"questionType\": \"multiple-choice\",\n  \"options\": [\n    { \"text\": \"3\", \"isCorrect\": false },\n    { \"text\": \"4\", \"isCorrect\": true },\n    { \"text\": \"5\", \"isCorrect\": false },\n    { \"text\": \"6\", \"isCorrect\": false }\n  ],\n  \"points\": 1,\n  \"difficulty\": \"easy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Questions"]
+            },
+            "description": "Crear una pregunta de opción múltiple (requiere rol de teacher)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Question - Multi-Select (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examId\": \"{{examId}}\",\n  \"questionText\": \"Selecciona los números pares:\",\n  \"questionType\": \"multi-select\",\n  \"options\": [\n    { \"text\": \"2\", \"isCorrect\": true },\n    { \"text\": \"3\", \"isCorrect\": false },\n    { \"text\": \"4\", \"isCorrect\": true },\n    { \"text\": \"5\", \"isCorrect\": false }\n  ],\n  \"points\": 2,\n  \"difficulty\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Questions"]
+            },
+            "description": "Crear una pregunta de selección múltiple (requiere rol de teacher)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Question - True/False (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examId\": \"{{examId}}\",\n  \"questionText\": \"La Tierra es plana\",\n  \"questionType\": \"true-false\",\n  \"options\": [\n    { \"text\": \"Verdadero\", \"isCorrect\": false },\n    { \"text\": \"Falso\", \"isCorrect\": true }\n  ],\n  \"points\": 1,\n  \"difficulty\": \"easy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Questions"]
+            },
+            "description": "Crear una pregunta de verdadero/falso (requiere rol de teacher)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Question (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionText\": \"¿Cuál es el resultado de 2 + 2? (Actualizada)\",\n  \"difficulty\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Questions", "{{questionId}}"]
+            },
+            "description": "Actualizar una pregunta existente (requiere rol de teacher)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Question (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Questions", "{{questionId}}"]
+            },
+            "description": "Eliminar una pregunta (requiere rol de teacher)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Results",
+      "item": [
+        {
+          "name": "Submit Exam (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"resultId\", jsonData._id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examId\": \"{{examId}}\",\n  \"answers\": [\n    {\n      \"questionId\": \"{{questionId}}\",\n      \"selectedOptions\": [1]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/Results",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Results"]
+            },
+            "description": "Enviar respuestas de un examen (requiere rol de student)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Results (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Results/my?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Results", "my"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "examId",
+                  "value": "{{examId}}",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Obtener los resultados propios del estudiante"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Results (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Results?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Results"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "examId",
+                  "value": "{{examId}}",
+                  "disabled": true
+                },
+                {
+                  "key": "studentId",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Obtener todos los resultados (requiere rol de teacher)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Result by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Results/{{resultId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Results", "{{resultId}}"]
+            },
+            "description": "Obtener un resultado específico por ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Result (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/Results/{{resultId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "Results", "{{resultId}}"]
+            },
+            "description": "Eliminar un resultado (requiere rol de teacher)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
